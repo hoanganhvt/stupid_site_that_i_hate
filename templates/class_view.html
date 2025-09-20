@@ -256,9 +256,9 @@
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
                             <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4"
-                                      placeholder="Enter student info (e.g., id1,Name 1,email1@example.com; id2,Name 2,email2@example.com)"
+                                      placeholder="Enter student info (e.g.,\nid1,Name 1,email1@example.com\nid2,Name 2,email2@example.com)"
                                       required></textarea>
-                            <small class="text-gray-500">Enter each student's ID, name, and email, separated by commas. Use semicolons to separate different students.</small>
+                            <small class="text-gray-500">Enter each student's ID, name, and email on a new line. Extra fields will be ignored.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
@@ -361,19 +361,20 @@
                 return;
             }
 
-            const students = studentList.split(';').map(s => s.trim()).filter(s => s);
+            const students = studentList.split('\n').map(s => s.trim()).filter(s => s);
             const invalidEntries = students.filter(s => {
                 const parts = s.split(',').map(p => p.trim());
-                return parts.length !== 3 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]);
+                return parts.length < 3 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]);
             });
 
             if (invalidEntries.length > 0) {
-                alert('Invalid entries detected. Each student must have an ID, name, and email, separated by commas (e.g., id1,Name 1,email1@example.com).');
+                alert('Invalid entries detected. Each student must have at least an ID, name, and email, separated by commas (e.g., id1,Name 1,email1@example.com).');
                 return;
             }
 
             const result_students = students.map(student => {
-                const [id, name, email] = student.split(',').map(p => p.trim());
+                const parts = student.split(',').map(p => p.trim());
+                const [id, name, email] = parts.slice(0, 3); // Chỉ lấy 3 giá trị đầu tiên, bỏ qua phần dư
                 return { id, name, email };
             });
 
