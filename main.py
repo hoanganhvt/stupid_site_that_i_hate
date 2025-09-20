@@ -181,12 +181,13 @@ def add_student():
 
 @app.route("/updatestudent",methods=['POST'])
 def update_student():
+    class_name = request.args.get('name')
+    class_started_year = request.args.get('year')
+
     if not session['id']:
         return redirect((url_for('login')))
     if session['id'] != admin_id:
         return 'may thang nhoc con'
-    class_name = request.args.get('name')
-    class_started_year = request.args.get('year')
     student_list=request.json['student_list']
     db=get_db()
     for student in student_list:

@@ -111,13 +111,13 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 3v18m6-18v18"/>
                                             </svg>
                                         </span>
-                                                                                        <input type="text" 
-                                                       class="form-control border-start-0 bg-gray-50 focus:bg-white transition-colors" 
-                                                       id="classNames" 
-                                                       name="classes" 
-                                                       placeholder="Enter class names separated by spaces"
-                                                       required
-                                                       maxlength="200">
+                                        <input type="text" 
+                                               class="form-control border-start-0 bg-gray-50 focus:bg-white transition-colors" 
+                                               id="classNames" 
+                                               name="classes" 
+                                               placeholder="Enter class names separated by spaces"
+                                               required
+                                               maxlength="200">
                                     </div>
                                     <div class="form-text">
                                         <small class="text-gray-500">
@@ -158,7 +158,7 @@
                 </div>
                 {% endif %}
 
-                <!-- Quick Actions Card -->
+                <!-- All Classes Card -->
                 <div class="card shadow-lg border-0 rounded-4 bg-white/80 backdrop-blur-sm mb-4">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
@@ -239,55 +239,6 @@
                             </button>
                         </div>
                         {% endif %}
-                    </div>
-                </div>
-
-                <!-- Quick Actions Navigation -->
-                <div class="card shadow-lg border-0 rounded-4 bg-white/80 backdrop-blur-sm">
-                    <div class="card-body p-5">
-                        <div class="text-center mb-4">
-                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                            </div>
-                            <h5 class="text-xl font-bold text-gray-800 mb-1">Quick Actions</h5>
-                            <p class="text-gray-600 text-sm">Common tasks and navigation</p>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="d-grid">
-                                    <button class="btn btn-outline-primary rounded-3 py-3 transition-all duration-200 hover:scale-105">
-                                        <svg class="w-6 h-6 mx-auto mb-2 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                                        </svg>
-                                        <small class="d-block font-medium">Manage Students</small>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="d-grid">
-                                    <button class="btn btn-outline-success rounded-3 py-3 transition-all duration-200 hover:scale-105">
-                                        <svg class="w-6 h-6 mx-auto mb-2 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                        <small class="d-block font-medium">Attendance</small>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="d-grid">
-                                    <button class="btn btn-outline-warning rounded-3 py-3 transition-all duration-200 hover:scale-105">
-                                        <svg class="w-6 h-6 mx-auto mb-2 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2 2z"/>
-                                        </svg>
-                                        <small class="d-block font-medium">Reports</small>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -427,7 +378,7 @@
             }, 5000);
         });
 
-        // Card entrance animation (same as login page)
+        // Card entrance animation
         window.addEventListener('load', function() {
             const cards = document.querySelectorAll('.card');
             cards.forEach((card, index) => {
