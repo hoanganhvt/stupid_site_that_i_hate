@@ -198,6 +198,24 @@ def update_student():
                 """,
                 (json.dumps(student['grade']),student['id'],student['class_name']) 
             )
+
+            db.execute(
+                """
+                update student_to_classes
+                set group_name=?
+                where id=? and class_name=?
+                """,
+                (student['group_name'],student['id'],student['class_name']) 
+            )
+
+            db.execute(
+                """
+                update student_to_classes
+                set is_group_leader=?
+                where id=? and class_name=?
+                """,
+                (student['is_group_leader'],student['id'],student['class_name']) 
+            )
     db.commit()
     db.close()
     return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")

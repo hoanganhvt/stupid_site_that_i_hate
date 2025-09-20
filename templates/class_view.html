@@ -6,6 +6,19 @@
     <title>Class {{ class_name }} - Student List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS để trim tên cột khi quá dài */
+        th {
+            max-width: 150px; /* Giới hạn chiều rộng tối đa của cột */
+            white-space: nowrap; /* Ngăn văn bản xuống dòng */
+            overflow: hidden; /* Ẩn phần vượt quá */
+            text-overflow: ellipsis; /* Thêm dấu "..." khi cắt */
+        }
+        /* Đảm bảo cột có thể cuộn nội dung khi cần */
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div class="container py-5">
@@ -129,6 +142,8 @@
                                         <th scope="col" class="px-4 py-3">id</th>
                                         <th scope="col" class="px-4 py-3">name</th>
                                         <th scope="col" class="px-4 py-3">email</th>
+                                        <th scope="col" class="px-4 py-3">group_name</th>
+                                        <th scope="col" class="px-4 py-3">is_group_leader</th>
                                         {% set grade_columns = [] %}
                                         {% for student in student_list %}
                                             {% if student.grade %}
@@ -162,6 +177,17 @@
                                         </td>
                                         <td class="px-4 py-2">{{ student.student_name or 'Unknown' }}</td>
                                         <td class="px-4 py-2">{{ student.email or 'N/A' }}</td>
+                                        <td class="px-4 py-2">
+                                            <input type="text" class="form-control form-control-sm group-name-input"
+                                                   data-student-id="{{ student.id }}"
+                                                   value="{{ student.group_name if student.group_name is defined else '' }}"
+                                                   style="width: 100px;">
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <input type="checkbox" class="form-check-input is-group-leader-input"
+                                                   data-student-id="{{ student.id }}"
+                                                   {% if student.is_group_leader is defined and student.is_group_leader %}checked{% endif %}>
+                                        </td>
                                         {% set grade_data = student.grade | from_json if student.grade else {} %}
                                         {% for column in grade_columns %}
                                             <td class="px-4 py-2">
@@ -230,9 +256,9 @@
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
                             <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4"
-                                      placeholder="Enter student info (e.g., id1,Name 1,email1@example.com; id2,Name 2,email2@example.com)"
+                                      placeholder="Enter student info (e.g., id1,Name 1,email1@example.com,Group A,false; id2,Name 2,email2@example.com,Group B,true)"
                                       required></textarea>
-                            <small class="text-gray-500">Enter each student's ID, name, and email, separated by commas. Use semicolons to separate different students.</small>
+                            <small class="text-gray-500">Enter each student's ID, name, email, group name, and is_group_leader (true/false), separated by commas. Use semicolons to separate different students.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
@@ -263,7 +289,7 @@
                         <div class="mb-3">
                             <label for="grade_column_name" class="form-label text-gray-700 font-medium">Column Name</label>
                             <input type="text" class="form-control rounded-3" id="grade_column_name" name="grade_column_name"
-                                   placeholder="Enter grade column name (e.g., Midterm, Final)" required>
+                                   placeholder="Enter grade column name (e.g., Midterm Grade, Final Exam)" required>
                             <small class="text-gray-500">Enter a unique name for the new grade column.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
@@ -338,17 +364,17 @@
             const students = studentList.split(';').map(s => s.trim()).filter(s => s);
             const invalidEntries = students.filter(s => {
                 const parts = s.split(',').map(p => p.trim());
-                return parts.length !== 3 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]);
+                return parts.length !== 5 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]) || !['true', 'false'].includes(parts[4].toLowerCase());
             });
 
             if (invalidEntries.length > 0) {
-                alert('Invalid entries detected. Each student must have an alphanumeric ID, a name, and a valid email, separated by commas (e.g., id1,Name 1,email1@example.com).');
+                alert('Invalid entries detected. Each student must have an ID, name, email, group name, and is_group_leader (true/false), separated by commas (e.g., id1,Name 1,email1@example.com,Group A,false).');
                 return;
             }
 
             const result_students = students.map(student => {
-                const [id, name, email] = student.split(',').map(p => p.trim());
-                return { id, name, email };
+                const [id, name, email, group_name, is_group_leader] = student.split(',').map(p => p.trim());
+                return { id, name, email, group_name, is_group_leader: is_group_leader.toLowerCase() === 'true' };
             });
 
             const send_object = {
@@ -384,14 +410,14 @@
         document.getElementById('addGradeColumnForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const columnName = document.getElementById('grade_column_name').value.trim();
-            if (!columnName || !/^[a-zA-Z0-9_]+$/.test(columnName)) {
-                alert('Please enter a valid column name (alphanumeric and underscores only).');
+            if (!columnName) {
+                alert('Please enter a column name.');
                 return;
             }
 
             const table = document.getElementById('studentTable');
             const thead = table.querySelector('thead tr');
-            const existingColumns = Array.from(thead.querySelectorAll('th')).map(th => th.textContent.trim()).slice(3, -1); // Exclude id, name, email, and add column button
+            const existingColumns = Array.from(thead.querySelectorAll('th')).map(th => th.textContent.trim()).slice(5, -1); // Exclude id, name, email, group_name, is_group_leader, and add column button
 
             if (existingColumns.includes(columnName)) {
                 alert('Column name already exists.');
@@ -423,6 +449,8 @@
             const studentList = [];
             document.querySelectorAll('#studentTable tbody tr').forEach(row => {
                 const studentId = row.dataset.studentId;
+                const groupNameInput = row.querySelector('.group-name-input');
+                const isGroupLeaderInput = row.querySelector('.is-group-leader-input');
                 const gradeInputs = row.querySelectorAll('.grade-input');
                 const grade = {};
                 gradeInputs.forEach(input => {
@@ -435,7 +463,9 @@
                 studentList.push({
                     id: studentId,
                     class_name: '{{ class_name }}',
-                    grade: grade
+                    grade: grade,
+                    group_name: groupNameInput ? groupNameInput.value.trim() : '',
+                    is_group_leader: isGroupLeaderInput ? isGroupLeaderInput.checked : false
                 });
             });
 
