@@ -32,7 +32,9 @@ def add_user(user_id,user_name):
 def serve_main():
     if 'id' in session:
         if session['id'] != admin_id:
-            return "may thang nhoc con"
+            db=get_db()
+            user_data=db.execute("select * from student_to_classes where id = ?",(session['id'],)).fetchall()
+            return render_template('personal.html',user_data=user_data)
         db = get_db()
         classes_list = db.execute("SELECT * FROM classes ORDER BY started_year DESC, class_name ASC")
         classes_list = classes_list.fetchall()
