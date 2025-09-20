@@ -1,5 +1,6 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+import json
 from datetime import date
 
 database_path = "./database/data.db"
@@ -7,6 +8,13 @@ database_path = "./database/data.db"
 app = Flask(__name__)
 app.secret_key = 'dmcs'  
 admin_id = "00000000"
+
+def from_json_filter(value):
+    if value:
+        return json.loads(value)
+    return {}
+
+app.jinja_env.filters['from_json'] = from_json_filter
 
 def get_db():
     conn = sqlite3.connect(database_path)
@@ -167,6 +175,33 @@ def add_student():
     db.commit()
     db.close()    
     return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")
+
+
+@app.route("/updatestudent",methods=['POST'])
+def update_student():
+    if not session['id']:
+        return redirect((url_for('login')))
+    if session['id'] != admin_id:
+        return 'may thang nhoc con'
+    class_name = request.args.get('name')
+    class_started_year = request.args.get('year')
+    student_list=request.json['student_list']
+    db=get_db()
+    for student in student_list:
+        student_exist=db.execute("select id from student_to_classes where id=? and class_name=?",(student['id'],student['class_name']))
+        if student_exist:
+            db.execute(
+                """
+                update student_to_classes
+                set grade=?
+                where id=? and class_name=?
+                """,
+                (json.dumps(student['grade']),student['id'],student['class_name']) 
+            )
+    db.commit()
+    db.close()
+    return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
