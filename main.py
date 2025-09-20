@@ -13,6 +13,13 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+
+def add_user(user_id,user_name):
+    db=get_db()
+    db.execute("insert into users(id,password,name) values(?,?,?)",(user_id,user_id,user_name))
+    db.commit()
+    db.close()
+
 @app.route('/', methods=['GET','POST'])
 def serve_main():
     if 'id' in session:
@@ -150,7 +157,15 @@ def add_student():
         return 'may thang nhoc con'
     class_name = request.args.get('name')
     class_started_year = request.args.get('year')
-    print(request.json)
+    student_array=request.json['student_array']
+    db=get_db()
+    for student in student_array:
+        user_exist=db.execute("select * from users where id=? and name=?",(student['id'],student['name'])).fetchone()
+        if not user_exist:
+            db.execute("insert into users(id,password,name) values(?,?,?)",(student['id'],student['id'],student['name']))
+        db.execute("insert into student_to_classes(id,student_name,class_name,started_year) values(?,?,?,?)",(student['id'],student['name'],class_name,class_started_year))
+    db.commit()
+    db.close()    
     return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")
 
 if __name__ == "__main__":
