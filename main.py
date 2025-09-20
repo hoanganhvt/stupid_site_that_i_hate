@@ -144,10 +144,14 @@ def view_class():
 
 @app.route('/addstudent',methods=['POST'])
 def add_student():
-    if not session[id]:
+    if not session['id']:
         return redirect(url_for('login'))
-    if(session[id] != admin_id):
+    if(session['id'] != admin_id):
         return 'may thang nhoc con'
-    student_json=request.form.get('student_list')
+    class_name = request.args.get('name')
+    class_started_year = request.args.get('year')
+    print(request.json)
+    return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
