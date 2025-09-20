@@ -256,9 +256,9 @@
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
                             <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4"
-                                      placeholder="Enter student info (e.g., id1,Name 1,email1@example.com,Group A,false; id2,Name 2,email2@example.com,Group B,true)"
+                                      placeholder="Enter student info (e.g., id1,Name 1,email1@example.com; id2,Name 2,email2@example.com)"
                                       required></textarea>
-                            <small class="text-gray-500">Enter each student's ID, name, email, group name, and is_group_leader (true/false), separated by commas. Use semicolons to separate different students.</small>
+                            <small class="text-gray-500">Enter each student's ID, name, and email, separated by commas. Use semicolons to separate different students.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
@@ -364,17 +364,17 @@
             const students = studentList.split(';').map(s => s.trim()).filter(s => s);
             const invalidEntries = students.filter(s => {
                 const parts = s.split(',').map(p => p.trim());
-                return parts.length !== 5 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]) || !['true', 'false'].includes(parts[4].toLowerCase());
+                return parts.length !== 3 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]);
             });
 
             if (invalidEntries.length > 0) {
-                alert('Invalid entries detected. Each student must have an ID, name, email, group name, and is_group_leader (true/false), separated by commas (e.g., id1,Name 1,email1@example.com,Group A,false).');
+                alert('Invalid entries detected. Each student must have an ID, name, and email, separated by commas (e.g., id1,Name 1,email1@example.com).');
                 return;
             }
 
             const result_students = students.map(student => {
-                const [id, name, email, group_name, is_group_leader] = student.split(',').map(p => p.trim());
-                return { id, name, email, group_name, is_group_leader: is_group_leader.toLowerCase() === 'true' };
+                const [id, name, email] = student.split(',').map(p => p.trim());
+                return { id, name, email };
             });
 
             const send_object = {
