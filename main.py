@@ -142,8 +142,22 @@ def view_class():
             return redirect(url_for('serve_main'))
         
         cursor = db.execute(
-            'SELECT * FROM student_to_classes WHERE class_name=? AND started_year=?',
-            (class_name, int(class_started_year))  
+            '''
+            SELECT 
+                stc.id,
+                stc.student_name,
+                stc.class_name,
+                stc.started_year,
+                stc.group_name,
+                stc.is_group_leader,
+                stc.absent,
+                stc.grade,
+                u.email
+            FROM student_to_classes AS stc
+            JOIN users AS u ON stc.id = u.id
+            WHERE stc.class_name = ? AND stc.started_year = ?
+            ''',
+            (class_name, int(class_started_year))
         )
         student_list = cursor.fetchall()
         
@@ -172,7 +186,8 @@ def add_student():
     for student in student_array:
         user_exist=db.execute("select * from users where id=? and name=?",(student['id'],student['name'])).fetchone()
         if not user_exist:
-            db.execute("insert into users(id,password,name) values(?,?,?)",(student['id'],student['id'],student['name']))
+            print(student)
+            db.execute("insert into users(id,password,name,email) values(?,?,?,?)",(student['id'],student['id'],student['name'],student['email']))
         db.execute("insert into student_to_classes(id,student_name,class_name,started_year) values(?,?,?,?)",(student['id'],student['name'],class_name,class_started_year))
     db.commit()
     db.close()    
@@ -222,6 +237,45 @@ def update_student():
     db.commit()
     db.close()
     return redirect(url_for("view_class")+f"?name={class_name}&year={class_started_year}")
+
+@app.route("/classsettings",methods=['GET','POST'])
+def class_settings():
+    if 'id' not in session:
+        return redirect(url_for('login'))
+    if session['id'] != admin_id:
+        return "hehehe"
+    if request.method=='GET':
+        class_name=request.args.get("name")
+        class_started_year=request.args.get("year")
+        db=get_db()
+        grade_sample=db.execute("select grade from student_to_classes where class_name=? and started_year=?",(class_name,int(class_started_year))).fetchone()
+        if grade_sample:
+            grade_sample=json.loads(grade_sample['grade'])
+        else:
+            grade_sample={}
+        grades_column_relation={}
+        group_leader_col=db.execute("select col_list from group_leader_col where class_name=? and started_year=?",(class_name,class_started_year)).fetchone()
+        if group_leader_col:
+            group_leader_col=json.loads(group_leader_col['col_list'])
+            group_leader_col=group_leader_col['list']
+        else:
+            group_leader_col=[]
+
+        for key in grade_sample:
+            bonus_to=db.execute("select to_col from bonus_point_relation where from_col=?",(key,)).fetchall()
+            if bonus_to:
+                bonus_to=[score['to_col'] for score in bonus_to]
+            else:
+                bonus_to=[]
+            grades_column_relation[key]={'bonus_to':bonus_to}
+            grades_column_relation[key]['is_groul_leader_col']=True if key in group_leader_col else False 
+        
+        db.close()
+        return render_template("classsettings.html",col_list=grades_column_relation)
+    else:
+        grades_column_relation=request.json
+        db=get_db()
+    return 'ok og'
 
 
 if __name__ == "__main__":

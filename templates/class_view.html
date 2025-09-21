@@ -17,6 +17,56 @@
         /* Đảm bảo cột có thể cuộn nội dung khi cần */
         .table-responsive {
             overflow-x: auto;
+            cursor: grab;
+            user-select: none;
+        }
+        .table-responsive:active {
+            cursor: grabbing;
+        }
+        /* Scroll buttons */
+        .scroll-btn {
+            position: fixed;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            opacity: 0.6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+            z-index: 1000;
+        }
+        .scroll-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.1);
+        }
+        #scrollTopBtn {
+            top: 20px;
+        }
+        #scrollBottomBtn {
+            bottom: 20px;
+        }
+        .scroll-btn svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+        /* Invalid input style */
+        .grade-input:invalid {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        /* Tooltip styling */
+        .tooltip-inner {
+            background-color: #1f2937;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .tooltip .tooltip-arrow::before {
+            border-color: #1f2937 transparent transparent transparent;
         }
     </style>
 </head>
@@ -61,12 +111,20 @@
                                 </svg>
                                 Back to Dashboard
                             </a>
-                            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-3">
-                                <svg class="w-4 h-4 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
-                                </svg>
-                                Logout
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="/classsettings?name={{ class_name }}&year={{ year }}" class="btn btn-outline-primary btn-sm rounded-3">
+                                    <svg class="w-4 h-4 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                    </svg>
+                                    Settings
+                                </a>
+                                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-3">
+                                    <svg class="w-4 h-4 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+                                    </svg>
+                                    Logout
+                                </a>
+                            </div>
                         </div>
 
                         <div class="text-center mb-4">
@@ -121,9 +179,7 @@
                                 </h5>
                                 <p class="text-gray-600 text-sm mb-0">Manage students in this class</p>
                             </div>
-                            <button class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2"
-                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; height: 40px;"
-                                    data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                            <button class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; height: 40px;" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                                 <span class="d-flex align-items-center justify-content-center">
                                     <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -156,15 +212,26 @@
                                             {% endif %}
                                         {% endfor %}
                                         {% for column in grade_columns %}
-                                            <th scope="col" class="px-4 py-3">{{ column }}</th>
+                                            <th scope="col" class="px-4 py-3" data-column="{{ column }}">
+                                                <span>{{ column }}</span>
+                                                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options" aria-label="Column options for {{ column }}">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a>
+                                                    <a class="dropdown-item" href="#" data-action="quick-edit">Quick edit</a>
+                                                    <a class="dropdown-item" href="#" data-action="delete">Xóa toàn bộ cột</a>
+                                                </div>
+                                            </th>
                                         {% endfor %}
                                         <th scope="col" class="px-4 py-3">
-                                            <button class="btn btn-sm text-white rounded-3"
-                                                    style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); height: 30px; padding: 0 8px;"
-                                                    data-bs-toggle="modal" data-bs-target="#addGradeColumnModal">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <button class="btn btn-sm text-white rounded-3 d-flex align-items-center" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); height: 30px; padding: 0 8px;" data-bs-toggle="modal" data-bs-target="#addGradeColumnModal" data-bs-tooltip="tooltip" data-bs-placement="top" title="Add new grade column" aria-label="Add new grade column">
+                                                <svg class="w-4 h-4 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
+                                                <span>Add</span>
                                             </button>
                                         </th>
                                     </tr>
@@ -178,23 +245,15 @@
                                         <td class="px-4 py-2">{{ student.student_name or 'Unknown' }}</td>
                                         <td class="px-4 py-2">{{ student.email or 'N/A' }}</td>
                                         <td class="px-4 py-2">
-                                            <input type="text" class="form-control form-control-sm group-name-input"
-                                                   data-student-id="{{ student.id }}"
-                                                   value="{{ student.group_name if student.group_name is defined else '' }}"
-                                                   style="width: 100px;">
+                                            <input type="text" class="form-control form-control-sm group-name-input" data-student-id="{{ student.id }}" value="{{ student.group_name if student.group_name is defined else '' }}" style="width: 100px;">
                                         </td>
                                         <td class="px-4 py-2">
-                                            <input type="checkbox" class="form-check-input is-group-leader-input"
-                                                   data-student-id="{{ student.id }}"
-                                                   {% if student.is_group_leader is defined and student.is_group_leader %}checked{% endif %}>
+                                            <input type="checkbox" class="form-check-input is-group-leader-input" data-student-id="{{ student.id }}" {% if student.is_group_leader is defined and student.is_group_leader %}checked{% endif %}>
                                         </td>
                                         {% set grade_data = student.grade | from_json if student.grade else {} %}
                                         {% for column in grade_columns %}
                                             <td class="px-4 py-2">
-                                                <input type="text" class="form-control form-control-sm grade-input"
-                                                       data-column="{{ column }}"
-                                                       value="{{ grade_data[column] if grade_data[column] is defined else '' }}"
-                                                       style="width: 100px;">
+                                                <input type="text" class="form-control form-control-sm grade-input" data-column="{{ column }}" value="{{ grade_data[column] if grade_data[column] is defined else '0' }}" style="width: 100px;" pattern="^(?:[0-9]+(?:\.[0-9]{1,2})?)?$" title="Please enter a valid grade (e.g., 5, 10, 9.5, 8.75)">
                                             </td>
                                         {% endfor %}
                                         <td class="px-4 py-2"></td>
@@ -204,8 +263,7 @@
                             </table>
                         </div>
                         <div class="text-center mt-4">
-                            <button id="updateGradesButton" class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2 px-4"
-                                    style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);">
+                            <button id="updateGradesButton" class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2 px-4" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);">
                                 Update Grades
                             </button>
                         </div>
@@ -218,9 +276,7 @@
                             </div>
                             <h5 class="text-gray-600 mb-2">No Students Found</h5>
                             <p class="text-gray-500 text-sm mb-4">This class doesn't have any students yet. Start by adding the first student.</p>
-                            <button class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2 px-4"
-                                    style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); border: none; height: 45px;"
-                                    data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                            <button class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2 px-4" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); border: none; height: 45px;" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                                 <span class="d-flex align-items-center justify-content-center">
                                     <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -234,6 +290,18 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Scroll Buttons -->
+    <div id="scrollTopBtn" class="scroll-btn" role="button" aria-label="Scroll to top">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+        </svg>
+    </div>
+    <div id="scrollBottomBtn" class="scroll-btn" role="button" aria-label="Scroll to bottom">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
     </div>
 
     <!-- Add Student Modal -->
@@ -255,15 +323,12 @@
                         <input type="hidden" name="started_year" value="{{ year }}">
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
-                            <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4"
-                                      placeholder="Enter student info (e.g.,\nid1,Name 1,email1@example.com\nid2,Name 2,email2@example.com)"
-                                      required></textarea>
+                            <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4" placeholder="Enter student info (e.g.,\nid1,Name 1,email1@example.com\nid2,Name 2,email2@example.com)" required></textarea>
                             <small class="text-gray-500">Enter each student's ID, name, and email on a new line. Extra fields will be ignored.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn text-white rounded-3"
-                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Students</button>
+                            <button type="submit" class="btn text-white rounded-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Students</button>
                         </div>
                     </form>
                 </div>
@@ -288,14 +353,40 @@
                     <form id="addGradeColumnForm">
                         <div class="mb-3">
                             <label for="grade_column_name" class="form-label text-gray-700 font-medium">Column Name</label>
-                            <input type="text" class="form-control rounded-3" id="grade_column_name" name="grade_column_name"
-                                   placeholder="Enter grade column name (e.g., Midterm Grade, Final Exam)" required>
+                            <input type="text" class="form-control rounded-3" id="grade_column_name" name="grade_column_name" placeholder="Enter grade column name (e.g., Midterm Grade, Final Exam)" required>
                             <small class="text-gray-500">Enter a unique name for the new grade column.</small>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn text-white rounded-3"
-                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Column</button>
+                            <button type="submit" class="btn text-white rounded-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Column</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Edit Modal -->
+    <div class="modal fade" id="quickEditModal" tabindex="-1" aria-labelledby="quickEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow-lg border-0">
+                <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0">
+                    <h5 class="modal-title" id="quickEditModalLabel">
+                        Quick Edit Grades
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-5">
+                    <form id="quickEditForm">
+                        <input type="hidden" id="quickEditColumn">
+                        <div class="mb-3">
+                            <label for="quickEditTextarea" class="form-label text-gray-700 font-medium">Grades (one per line)</label>
+                            <textarea class="form-control rounded-3" id="quickEditTextarea" rows="10"></textarea>
+                            <small class="text-gray-500">Enter grades for each student on a new line in order.</small>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn text-white rounded-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Apply</button>
                         </div>
                     </form>
                 </div>
@@ -305,6 +396,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tooltip="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
         // Card entrance animation
         window.addEventListener('load', function () {
             const cards = document.querySelectorAll('.card');
@@ -349,6 +448,137 @@
                 button.addEventListener('mouseleave', function () {
                     this.style.transform = 'translateY(0)';
                 });
+            }
+        });
+
+        // Drag to scroll table horizontally
+        const tableResponsive = document.querySelector('.table-responsive');
+        let isDragging = false;
+        let startX, scrollLeft;
+
+        tableResponsive.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - tableResponsive.offsetLeft;
+            scrollLeft = tableResponsive.scrollLeft;
+            tableResponsive.style.cursor = 'grabbing';
+        });
+
+        tableResponsive.addEventListener('mouseleave', () => {
+            isDragging = false;
+            tableResponsive.style.cursor = 'grab';
+        });
+
+        tableResponsive.addEventListener('mouseup', () => {
+            isDragging = false;
+            tableResponsive.style.cursor = 'grab';
+        });
+
+        tableResponsive.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - tableResponsive.offsetLeft;
+            const walk = (x - startX) * 2; // Adjust scroll speed
+            tableResponsive.scrollLeft = scrollLeft - walk;
+        });
+
+        // Scroll buttons functionality
+        document.getElementById('scrollTopBtn').addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        document.getElementById('scrollBottomBtn').addEventListener('click', () => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+
+        // Validate grade inputs
+        document.querySelectorAll('.grade-input').forEach(input => {
+            input.addEventListener('input', function () {
+                const value = this.value.trim();
+                if (value === '') {
+                    this.value = '0'; // Set default value to 0 if empty
+                    return;
+                }
+                // Allow integers or decimals with up to two decimal places (e.g., 5, 10, 9.5, 8.75)
+                if (!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
+                    this.setCustomValidity('Invalid grade. Use integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        });
+
+        // Quick Edit Modal
+        const quickEditModalElement = document.getElementById('quickEditModal');
+        const quickEditModal = new bootstrap.Modal(quickEditModalElement);
+
+        // Handle column options
+        document.getElementById('studentTable').addEventListener('click', function (e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                e.preventDefault();
+                const action = item.dataset.action;
+                const th = item.closest('th');
+                const column = th.dataset.column;
+
+                if (action === 'rename') {
+                    const newName = prompt('Đổi tên cột:', column);
+                    if (newName && newName !== column) {
+                        const existing = Array.from(document.querySelectorAll('th[data-column]')).map(t => t.dataset.column);
+                        if (existing.includes(newName)) {
+                            alert('Tên cột đã tồn tại.');
+                            return;
+                        }
+                        th.querySelector('span').textContent = newName;
+                        th.dataset.column = newName;
+                        th.querySelector('button').setAttribute('aria-label', `Column options for ${newName}`);
+                        document.querySelectorAll(`.grade-input[data-column="${column}"]`).forEach(inp => {
+                            inp.dataset.column = newName;
+                        });
+                    }
+                } else if (action === 'delete') {
+                    if (confirm(`Bạn có chắc muốn xóa cột "${column}"?`)) {
+                        const position = Array.from(th.parentNode.children).indexOf(th);
+                        th.remove();
+                        document.querySelectorAll('tbody tr').forEach(tr => {
+                            if (tr.children[position]) tr.children[position].remove();
+                        });
+                    }
+                } else if (action === 'quick-edit') {
+                    document.getElementById('quickEditColumn').value = column;
+                    const grades = [];
+                    document.querySelectorAll('tbody tr').forEach(tr => {
+                        const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
+                        grades.push(inp ? inp.value : '0');
+                    });
+                    document.getElementById('quickEditTextarea').value = grades.join('\n');
+                    document.getElementById('quickEditTextarea').rows = Math.max(10, grades.length);
+                    quickEditModal.show();
+                }
+            }
+        });
+
+        // Quick Edit Form Submission
+        document.getElementById('quickEditForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const column = document.getElementById('quickEditColumn').value;
+            const lines = document.getElementById('quickEditTextarea').value.split('\n').map(l => l.trim());
+            let i = 0;
+            let hasInvalidGrades = false;
+            document.querySelectorAll('tbody tr').forEach(tr => {
+                const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
+                if (inp) {
+                    const grade = lines[i] || '0';
+                    if (grade && !/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(grade)) {
+                        hasInvalidGrades = true;
+                        alert(`Invalid grade "${grade}" at line ${i + 1}. Grades must be integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).`);
+                        return;
+                    }
+                    inp.value = grade;
+                    i++;
+                }
+            });
+            if (!hasInvalidGrades) {
+                quickEditModal.hide();
             }
         });
 
@@ -418,7 +648,7 @@
 
             const table = document.getElementById('studentTable');
             const thead = table.querySelector('thead tr');
-            const existingColumns = Array.from(thead.querySelectorAll('th')).map(th => th.textContent.trim()).slice(5, -1); // Exclude id, name, email, group_name, is_group_leader, and add column button
+            const existingColumns = Array.from(thead.querySelectorAll('th[data-column]')).map(th => th.dataset.column);
 
             if (existingColumns.includes(columnName)) {
                 alert('Column name already exists.');
@@ -429,25 +659,62 @@
             const newTh = document.createElement('th');
             newTh.scope = 'col';
             newTh.className = 'px-4 py-3';
-            newTh.textContent = columnName;
+            newTh.dataset.column = columnName;
+            newTh.innerHTML = `
+                <span>${columnName}</span>
+                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options" aria-label="Column options for ${columnName}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a>
+                    <a class="dropdown-item" href="#" data-action="quick-edit">Quick edit</a>
+                    <a class="dropdown-item" href="#" data-action="delete">Xóa toàn bộ cột</a>
+                </div>
+            `;
             thead.insertBefore(newTh, thead.lastElementChild);
 
-            // Add new input fields to each row
+            // Add new input fields to each row with default value 0
             table.querySelectorAll('tbody tr').forEach(row => {
                 const newTd = document.createElement('td');
                 newTd.className = 'px-4 py-2';
-                newTd.innerHTML = `<input type="text" class="form-control form-control-sm grade-input" data-column="${columnName}" value="" style="width: 100px;">`;
+                newTd.innerHTML = `<input type="text" class="form-control form-control-sm grade-input" data-column="${columnName}" value="0" style="width: 100px;" pattern="^(?:[0-9]+(?:\.[0-9]{1,2})?)?$" title="Please enter a valid grade (e.g., 5, 10, 9.5, 8.75)">`;
                 row.insertBefore(newTd, row.lastElementChild);
             });
 
             const modal = bootstrap.Modal.getInstance(document.getElementById('addGradeColumnModal'));
             modal.hide();
             document.getElementById('addGradeColumnForm').reset();
+
+            // Reinitialize tooltips for new buttons
+            const newTooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tooltip="tooltip"]'));
+            newTooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Add validation to new grade inputs
+            document.querySelectorAll('.grade-input').forEach(input => {
+                input.addEventListener('input', function () {
+                    const value = this.value.trim();
+                    if (value === '') {
+                        this.value = '0'; // Set default value to 0 if empty
+                        return;
+                    }
+                    // Allow integers or decimals with up to two decimal places (e.g., 5, 10, 9.5, 8.75)
+                    if (!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
+                        this.setCustomValidity('Invalid grade. Use integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            });
         });
 
         // Update Grades Button
         document.getElementById('updateGradesButton').addEventListener('click', async function () {
             const studentList = [];
+            let hasInvalidGrades = false;
             document.querySelectorAll('#studentTable tbody tr').forEach(row => {
                 const studentId = row.dataset.studentId;
                 const groupNameInput = row.querySelector('.group-name-input');
@@ -457,9 +724,10 @@
                 gradeInputs.forEach(input => {
                     const column = input.dataset.column;
                     const value = input.value.trim();
-                    if (value) {
-                        grade[column] = value;
+                    if (value && !/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
+                        hasInvalidGrades = true;
                     }
+                    grade[column] = value || '0'; // Use 0 if empty
                 });
                 studentList.push({
                     id: studentId,
@@ -469,6 +737,11 @@
                     is_group_leader: isGroupLeaderInput ? isGroupLeaderInput.checked : false
                 });
             });
+
+            if (hasInvalidGrades) {
+                alert('Please correct invalid grades. Grades must be integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
+                return;
+            }
 
             const send_object = { student_list: studentList };
             const className = encodeURIComponent('{{ class_name }}');
