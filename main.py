@@ -21,7 +21,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def add_user(user_id,user_name):
     db=get_db()
     db.execute("insert into users(id,password,name) values(?,?,?)",(user_id,user_id,user_name))
@@ -171,6 +170,7 @@ def view_class():
         return redirect(url_for('serve_main'))
     finally:
         db.close() 
+    
 
 
 @app.route('/addstudent',methods=['POST'])
@@ -244,9 +244,9 @@ def class_settings():
         return redirect(url_for('login'))
     if session['id'] != admin_id:
         return "hehehe"
+    class_name=request.args.get("name")
+    class_started_year=request.args.get("year")
     if request.method=='GET':
-        class_name=request.args.get("name")
-        class_started_year=request.args.get("year")
         db=get_db()
         grade_sample=db.execute("select grade from student_to_classes where class_name=? and started_year=?",(class_name,int(class_started_year))).fetchone()
         if grade_sample:
@@ -260,7 +260,12 @@ def class_settings():
             group_leader_col=group_leader_col['list']
         else:
             group_leader_col=[]
-
+        
+        col_weight=db.execute("select col_weight from column_weight where class_name=? and started_year=?",(class_name,int(class_started_year))).fetchone()
+        if col_weight:
+            col_weight=json.loads(col_weight['col_weight'])
+        else:
+            col_weight={}
         for key in grade_sample:
             bonus_to=db.execute("select to_col from bonus_point_relation where from_col=?",(key,)).fetchall()
             if bonus_to:
@@ -268,14 +273,51 @@ def class_settings():
             else:
                 bonus_to=[]
             grades_column_relation[key]={'bonus_to':bonus_to}
-            grades_column_relation[key]['is_groul_leader_col']=True if key in group_leader_col else False 
-        
+            grades_column_relation[key]['is_group_leader_col']=True if key in group_leader_col else False 
+            grades_column_relation[key]['col_weight']=float(col_weight[key]) if key in col_weight else 0
+        print(grades_column_relation)
         db.close()
         return render_template("classsettings.html",col_list=grades_column_relation)
     else:
         grades_column_relation=request.json
         db=get_db()
-    return 'ok og'
+        col_weight={col_name:float(grades_column_relation[col_name]['weight']) for col_name in grades_column_relation}
+        group_leader_col=[]
+        for col_name in grades_column_relation:
+            if grades_column_relation[col_name]['is_group_leader_col']:
+                group_leader_col.append(col_name)
+            db.execute(
+                """
+                delete from bonus_point_relation 
+                where class_name=? and started_year=? and from_col=?
+                """,
+                (class_name,class_started_year,col_name)
+            )
+
+            for col_to_bonus in grades_column_relation[col_name]['bonus_to']:
+                db.execute(
+                    """
+                    insert into bonus_point_relation(class_name,started_year,from_col,to_col) values(?,?,?,?)
+                    """,
+                    (class_name,class_started_year,col_name,col_to_bonus)
+                )
+        
+        db.execute(
+            """
+            insert or replace into column_weight(class_name,started_year,col_weight) values(?,?,?)
+            """,
+            (class_name,class_started_year,json.dumps(col_weight))
+        )
+
+        db.execute(
+            """
+            insert or replace into group_leader_col(class_name,started_year,col_list) values(?,?,?)
+            """,
+            (class_name,class_started_year,json.dumps({"list":group_leader_col}))
+        )
+        db.commit()
+        db.close()
+        return redirect(url_for('class_settings')+f"?name={class_name}&year={class_started_year}")
 
 
 if __name__ == "__main__":

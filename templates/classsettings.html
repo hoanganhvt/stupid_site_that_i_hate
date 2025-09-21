@@ -22,7 +22,7 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else ('warning' if category == 'warning' else 'success') }} alert-dismissible fade show rounded-3 mb-4" role="alert">
+                            <div class="alert alert-{{ 'danger' if category == 'error' else ('warning' if category == 'warning' else ('success' if category == 'success' else 'info')) }} alert-dismissible fade show rounded-3 mb-4" role="alert">
                                 <div class="d-flex align-items-center">
                                     {% if category == 'success' %}
                                     <svg class="w-4 h-4 me-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,6 +35,10 @@
                                     {% elif category == 'warning' %}
                                     <svg class="w-4 h-4 me-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                    </svg>
+                                    {% elif category == 'info' %}
+                                    <svg class="w-4 h-4 me-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                     {% endif %}
                                     <span>{{ message }}</span>
@@ -96,7 +100,7 @@
                             <p class="text-gray-600 text-sm">Set up weights, bonus points, and group leader columns</p>
                         </div>
 
-                        <form id="settingsForm" method="POST">
+                        <form id="settingsForm">
                             {% if col_list %}
                                 {% for column_name, column_config in col_list.items() %}
                                 <div class="mb-4 p-4 border rounded-3 bg-light">
@@ -165,7 +169,7 @@
                                             </label>
                                             <input type="text" class="form-control form-control-sm weight-input" 
                                                    name="weight_{{ column_name }}" 
-                                                   value="{{ column_config.weight if column_config.weight is defined else '0' }}"
+                                                   value="{{ column_config.col_weight if column_config.col_weight is defined else '0' }}"
                                                    pattern="^[0-9]+(\.[0-9]{1,2})?$" 
                                                    title="Enter a valid number (e.g., 0, 0.5, 2.75)"
                                                    style="width: 80px;">
@@ -176,7 +180,7 @@
                                             <div class="form-check form-switch d-flex align-items-center">
                                                 <input class="form-check-input me-2" type="checkbox" 
                                                        name="leader_{{ column_name }}" id="leader_{{ column_name }}"
-                                                       {% if column_config.is_groul_leader_col %}checked{% endif %}>
+                                                       {% if column_config.is_group_leader_col %}checked{% endif %}>
                                                 <label class="form-check-label text-sm font-medium text-gray-700" for="leader_{{ column_name }}">
                                                     <svg class="w-4 h-4 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
@@ -189,7 +193,7 @@
                                         <!-- Visual Indicator -->
                                         <div class="col-md-1">
                                             <div class="text-center">
-                                                {% if column_config.is_groul_leader_col %}
+                                                {% if column_config.is_group_leader_col %}
                                                 <div class="bg-warning w-6 h-6 rounded-full mx-auto flex items-center justify-center">
                                                     <span class="text-xs">👑</span>
                                                 </div>
@@ -306,13 +310,14 @@
             });
         });
 
-        // Form validation and submission
-        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+        // Form submission with JSON
+        document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             const button = this.querySelector('button[type="submit"]');
             const originalText = button.innerHTML;
             let hasInvalidWeights = false;
 
-            // Validate all weight inputs before submission
+            // Validate all weight inputs
             document.querySelectorAll('.weight-input').forEach(input => {
                 const value = input.value.trim();
                 if (value && !/^[0-9]+(\.[0-9]{1,2})?$/.test(value)) {
@@ -324,19 +329,54 @@
             });
 
             if (hasInvalidWeights) {
-                e.preventDefault();
                 alert('Please correct invalid weights. Weights must be integers (e.g., 0, 1, 2) or decimals with up to two decimal places (e.g., 0.5, 2.75).');
                 return;
             }
 
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
-            
-            // Re-enable button after 3 seconds if form doesn't submit
-            setTimeout(() => {
+            // Collect form data
+            const grades_column_relation = {};
+            document.querySelectorAll('.mb-4.p-4.border.rounded-3.bg-light').forEach(row => {
+                const column_name = row.querySelector('h6').textContent;
+                const bonus_checkboxes = row.querySelectorAll(`input[name="bonus_${column_name}"]:checked`);
+                const bonus_to = Array.from(bonus_checkboxes).map(cb => cb.value);
+                const is_group_leader_col = row.querySelector(`input[name="leader_${column_name}"]`).checked;
+                const weight = row.querySelector(`input[name="weight_${column_name}"]`).value.trim() || '0';
+
+                grades_column_relation[column_name] = {
+                    bonus_to: bonus_to,
+                    is_group_leader_col: is_group_leader_col,
+                    weight: parseFloat(weight)
+                };
+            });
+
+            // Send JSON data to backend
+            const class_name = encodeURIComponent('{{ request.args.get("name") }}');
+            const year = encodeURIComponent('{{ request.args.get("year") }}');
+            const url = `/classsettings?name=${class_name}&year=${year}`;
+
+            try {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(grades_column_relation)
+                });
+
+                if (response.ok) {
+                    window.location.href = url; // Follow the redirect to reload the page with flash messages
+                } else {
+                    alert('Error updating settings. Please try again.');
+                }
+            } catch (error) {
+                alert('Error updating settings: ' + error.message);
+            } finally {
                 button.disabled = false;
                 button.innerHTML = originalText;
-            }, 3000);
+            }
         });
 
         // Visual indicators update

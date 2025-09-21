@@ -10,7 +10,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 class_name="10a3"
 class_started_year=2025
 db=get_db()
@@ -27,8 +26,22 @@ if group_leader_col:
 else:
 	group_leader_col=[]
 
+col_weight=db.execute("select col_weight from column_weight where class_name=? and started_year=?",(class_name,int(class_started_year))).fetchone()
+if col_weight:
+	col_weight=json.loads(col_weight['col_weight'])
 for key in grade_sample:
-	print(key)
 	bonus_to=db.execute("select to_col from bonus_point_relation where from_col=?",(key,)).fetchall()
-	if len(bonus_to):
-		print(bonus_to[0]['to_col'])
+	if bonus_to:
+		bonus_to=[score['to_col'] for score in bonus_to]
+	else:
+		bonus_to=[]
+	grades_column_relation[key]={'bonus_to':bonus_to}
+	grades_column_relation[key]['is_group_leader_col']=True if key in group_leader_col else False 
+	print(col_weight[key] if key in col_weight else 0)
+	grades_column_relation[key]['col_weight']=float(col_weight[key]) if key in col_weight else 0
+print(grades_column_relation)
+db.close()
+
+for i in []:
+	print('halu')
+

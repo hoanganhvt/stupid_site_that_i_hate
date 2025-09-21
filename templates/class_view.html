@@ -7,14 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* CSS để trim tên cột khi quá dài */
         th {
-            max-width: 150px; /* Giới hạn chiều rộng tối đa của cột */
-            white-space: nowrap; /* Ngăn văn bản xuống dòng */
-            overflow: hidden; /* Ẩn phần vượt quá */
-            text-overflow: ellipsis; /* Thêm dấu "..." khi cắt */
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        /* Đảm bảo cột có thể cuộn nội dung khi cần */
         .table-responsive {
             overflow-x: auto;
             cursor: grab;
@@ -23,7 +21,6 @@
         .table-responsive:active {
             cursor: grabbing;
         }
-        /* Scroll buttons */
         .scroll-btn {
             position: fixed;
             right: 20px;
@@ -54,12 +51,10 @@
             height: 20px;
             color: white;
         }
-        /* Invalid input style */
         .grade-input:invalid {
             border-color: #dc3545;
             background-color: #f8d7da;
         }
-        /* Tooltip styling */
         .tooltip-inner {
             background-color: #1f2937;
             color: white;
@@ -68,16 +63,35 @@
         .tooltip .tooltip-arrow::before {
             border-color: #1f2937 transparent transparent transparent;
         }
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-10 col-xl-8">
-                <!-- Header Card -->
                 <div class="card shadow-lg border-0 rounded-4 bg-white/80 backdrop-blur-sm mb-4">
                     <div class="card-body p-5">
-                        <!-- Flash Messages -->
                         {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                         {% for category, message in messages %}
@@ -166,7 +180,6 @@
                     </div>
                 </div>
 
-                <!-- Students List Card -->
                 <div class="card shadow-lg border-0 rounded-4 bg-white/80 backdrop-blur-sm">
                     <div class="card-body p-5">
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -190,7 +203,6 @@
                         </div>
 
                         {% if student_list %}
-                        <!-- Students Table -->
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered rounded-3" id="studentTable">
                                 <thead class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
@@ -292,7 +304,6 @@
         </div>
     </div>
 
-    <!-- Scroll Buttons -->
     <div id="scrollTopBtn" class="scroll-btn" role="button" aria-label="Scroll to top">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
@@ -304,7 +315,6 @@
         </svg>
     </div>
 
-    <!-- Add Student Modal -->
     <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow-lg border-0">
@@ -318,17 +328,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-5">
-                    <form id="addStudentForm">
-                        <input type="hidden" name="class_name" value="{{ class_name }}">
-                        <input type="hidden" name="started_year" value="{{ year }}">
+                    <form id="addStudentForm" action="{{ url_for('add_student', name=class_name, year=year) }}" method="POST">
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
                             <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4" placeholder="Enter student info (e.g.,\nid1,Name 1,email1@example.com\nid2,Name 2,email2@example.com)" required></textarea>
-                            <small class="text-gray-500">Enter each student's ID, name, and email on a new line. Extra fields will be ignored.</small>
+                            <small class="text-gray-500">Enter each student's ID, name, and email on a new line, separated by commas.</small>
+                            <div id="studentListError" class="text-danger mt-2" style="display: none;"></div>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn text-white rounded-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Students</button>
+                            <button type="submit" class="btn text-white rounded-3 add-student-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Add Students</button>
                         </div>
                     </form>
                 </div>
@@ -336,7 +345,6 @@
         </div>
     </div>
 
-    <!-- Add Grade Column Modal -->
     <div class="modal fade" id="addGradeColumnModal" tabindex="-1" aria-labelledby="addGradeColumnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow-lg border-0">
@@ -366,7 +374,6 @@
         </div>
     </div>
 
-    <!-- Quick Edit Modal -->
     <div class="modal fade" id="quickEditModal" tabindex="-1" aria-labelledby="quickEditModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow-lg border-0">
@@ -453,39 +460,31 @@
 
         // Drag to scroll table horizontally
         const tableResponsive = document.querySelector('.table-responsive');
-        let isDragging = false;
-        let startX, scrollLeft;
+        if (tableResponsive) {
+            let isDragging = false;
+            let startX, scrollLeft;
 
-        tableResponsive.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.pageX - tableResponsive.offsetLeft;
-            scrollLeft = tableResponsive.scrollLeft;
-            tableResponsive.style.cursor = 'grabbing';
-        });
-
-        tableResponsive.addEventListener('mouseleave', () => {
-            isDragging = false;
-            tableResponsive.style.cursor = 'grab';
-        });
-
-        tableResponsive.addEventListener('mouseup', () => {
-            isDragging = false;
-            tableResponsive.style.cursor = 'grab';
-        });
-
-        tableResponsive.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            const x = e.pageX - tableResponsive.offsetLeft;
-            const walk = (x - startX) * 2; // Adjust scroll speed
-            tableResponsive.scrollLeft = scrollLeft - walk;
-        });
+            tableResponsive.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.pageX - tableResponsive.offsetLeft;
+                scrollLeft = tableResponsive.scrollLeft;
+                tableResponsive.style.cursor = 'grabbing';
+            });
+            tableResponsive.addEventListener('mouseleave', () => { isDragging = false; tableResponsive.style.cursor = 'grab'; });
+            tableResponsive.addEventListener('mouseup', () => { isDragging = false; tableResponsive.style.cursor = 'grab'; });
+            tableResponsive.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - tableResponsive.offsetLeft;
+                const walk = (x - startX) * 2;
+                tableResponsive.scrollLeft = scrollLeft - walk;
+            });
+        }
 
         // Scroll buttons functionality
         document.getElementById('scrollTopBtn').addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
-
         document.getElementById('scrollBottomBtn').addEventListener('click', () => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         });
@@ -495,10 +494,9 @@
             input.addEventListener('input', function () {
                 const value = this.value.trim();
                 if (value === '') {
-                    this.value = '0'; // Set default value to 0 if empty
+                    this.value = '0';
                     return;
                 }
-                // Allow integers or decimals with up to two decimal places (e.g., 5, 10, 9.5, 8.75)
                 if (!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
                     this.setCustomValidity('Invalid grade. Use integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
                 } else {
@@ -512,51 +510,55 @@
         const quickEditModal = new bootstrap.Modal(quickEditModalElement);
 
         // Handle column options
-        document.getElementById('studentTable').addEventListener('click', function (e) {
-            const item = e.target.closest('.dropdown-item');
-            if (item) {
-                e.preventDefault();
-                const action = item.dataset.action;
-                const th = item.closest('th');
-                const column = th.dataset.column;
+        const studentTable = document.getElementById('studentTable');
+        if (studentTable) {
+            studentTable.addEventListener('click', function (e) {
+                const item = e.target.closest('.dropdown-item');
+                if (item) {
+                    e.preventDefault();
+                    const action = item.dataset.action;
+                    const th = item.closest('th');
+                    const column = th.dataset.column;
 
-                if (action === 'rename') {
-                    const newName = prompt('Đổi tên cột:', column);
-                    if (newName && newName !== column) {
-                        const existing = Array.from(document.querySelectorAll('th[data-column]')).map(t => t.dataset.column);
-                        if (existing.includes(newName)) {
-                            alert('Tên cột đã tồn tại.');
-                            return;
+                    if (action === 'rename') {
+                        const newName = prompt('Đổi tên cột:', column);
+                        if (newName && newName !== column) {
+                            const existing = Array.from(document.querySelectorAll('th[data-column]')).map(t => t.dataset.column);
+                            if (existing.includes(newName)) {
+                                alert('Tên cột đã tồn tại.');
+                                return;
+                            }
+                            th.querySelector('span').textContent = newName;
+                            th.dataset.column = newName;
+                            th.querySelector('button').setAttribute('aria-label', `Column options for ${newName}`);
+                            document.querySelectorAll(`.grade-input[data-column="${column}"]`).forEach(inp => {
+                                inp.dataset.column = newName;
+                            });
                         }
-                        th.querySelector('span').textContent = newName;
-                        th.dataset.column = newName;
-                        th.querySelector('button').setAttribute('aria-label', `Column options for ${newName}`);
-                        document.querySelectorAll(`.grade-input[data-column="${column}"]`).forEach(inp => {
-                            inp.dataset.column = newName;
-                        });
-                    }
-                } else if (action === 'delete') {
-                    if (confirm(`Bạn có chắc muốn xóa cột "${column}"?`)) {
-                        const position = Array.from(th.parentNode.children).indexOf(th);
-                        th.remove();
+                    } else if (action === 'delete') {
+                        if (confirm(`Bạn có chắc muốn xóa cột "${column}"?`)) {
+                            const position = Array.from(th.parentNode.children).indexOf(th);
+                            th.remove();
+                            document.querySelectorAll('tbody tr').forEach(tr => {
+                                if (tr.children[position]) tr.children[position].remove();
+                            });
+                        }
+                    } else if (action === 'quick-edit') {
+                        document.getElementById('quickEditColumn').value = column;
+                        const grades = [];
                         document.querySelectorAll('tbody tr').forEach(tr => {
-                            if (tr.children[position]) tr.children[position].remove();
+                            const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
+                            grades.push(inp ? inp.value : '0');
                         });
+                        const quickEditTextarea = document.getElementById('quickEditTextarea');
+                        quickEditTextarea.value = grades.join('\n');
+                        quickEditTextarea.rows = Math.max(10, grades.length);
+                        quickEditModal.show();
                     }
-                } else if (action === 'quick-edit') {
-                    document.getElementById('quickEditColumn').value = column;
-                    const grades = [];
-                    document.querySelectorAll('tbody tr').forEach(tr => {
-                        const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
-                        grades.push(inp ? inp.value : '0');
-                    });
-                    document.getElementById('quickEditTextarea').value = grades.join('\n');
-                    document.getElementById('quickEditTextarea').rows = Math.max(10, grades.length);
-                    quickEditModal.show();
                 }
-            }
-        });
-
+            });
+        }
+        
         // Quick Edit Form Submission
         document.getElementById('quickEditForm').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -570,7 +572,7 @@
                     const grade = lines[i] || '0';
                     if (grade && !/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(grade)) {
                         hasInvalidGrades = true;
-                        alert(`Invalid grade "${grade}" at line ${i + 1}. Grades must be integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).`);
+                        alert(`Invalid grade "${grade}" at line ${i + 1}.`);
                         return;
                     }
                     inp.value = grade;
@@ -583,57 +585,73 @@
         });
 
         // Add Student Form Submission
-        document.getElementById('addStudentForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const studentList = document.getElementById('student_list').value.trim();
-            if (!studentList) {
-                alert('Please enter at least one student\'s information.');
+        document.getElementById('addStudentForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const submitButton = form.querySelector('.add-student-btn');
+            const studentListText = document.getElementById('student_list').value.trim();
+            const errorDiv = document.getElementById('studentListError');
+            
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            if (!studentListText) {
+                errorDiv.textContent = 'Please enter student information.';
+                errorDiv.style.display = 'block';
                 return;
             }
 
-            const students = studentList.split('\n').map(s => s.trim()).filter(s => s);
-            const invalidEntries = students.filter(s => {
-                const parts = s.split(',').map(p => p.trim());
-                return parts.length < 3 || !parts[0] || !/^[a-zA-Z0-9]+$/.test(parts[0]) || !parts[1] || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parts[2]);
+            const lines = studentListText.split('\n').filter(line => line.trim() !== '');
+            const student_array = [];
+            const invalid_lines = [];
+
+            lines.forEach((line, index) => {
+                const parts = line.split(',').map(p => p.trim());
+                if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2]) {
+                    invalid_lines.push(index + 1);
+                } else {
+                    student_array.push({
+                        id: parts[0],
+                        name: parts[1],
+                        email: parts[2]
+                    });
+                }
             });
 
-            if (invalidEntries.length > 0) {
-                alert('Invalid entries detected. Each student must have at least an ID, name, and email, separated by commas (e.g., id1,Name 1,email1@example.com).');
+            if (invalid_lines.length > 0) {
+                errorDiv.textContent = `Invalid format on line(s): ${invalid_lines.join(', ')}. Please use: id,name,email`;
+                errorDiv.style.display = 'block';
                 return;
             }
 
-            const result_students = students.map(student => {
-                const parts = student.split(',').map(p => p.trim());
-                const [id, name, email] = parts.slice(0, 3); // Chỉ lấy 3 giá trị đầu tiên, bỏ qua phần dư
-                return { id, name, email };
-            });
-
-            const send_object = {
-                student_array: result_students
-            };
-
-            const className = encodeURIComponent('{{ class_name }}');
-            const year = encodeURIComponent('{{ year }}');
-            const url = `{{ url_for('add_student') }}?name=${className}&year=${year}`;
+            submitButton.classList.add('btn-loading');
+            submitButton.disabled = true;
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch(form.action, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(send_object)
+                    body: JSON.stringify({ student_array: student_array })
                 });
+
                 if (response.ok) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addStudentModal'));
-                    modal.hide();
-                    document.getElementById('addStudentForm').reset();
                     window.location.reload();
                 } else {
-                    alert('Error adding students. Please try again.');
+                    const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
+                    errorDiv.textContent = `Error: ${errorData.message || response.statusText}`;
+                    errorDiv.style.display = 'block';
                 }
+
             } catch (error) {
-                alert('Error adding students: ' + error.message);
+                console.error('Fetch error:', error);
+                errorDiv.textContent = 'A network error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                submitButton.classList.remove('btn-loading');
+                submitButton.disabled = false;
             }
         });
 
@@ -655,17 +673,14 @@
                 return;
             }
 
-            // Add new column to table header
             const newTh = document.createElement('th');
             newTh.scope = 'col';
             newTh.className = 'px-4 py-3';
             newTh.dataset.column = columnName;
             newTh.innerHTML = `
                 <span>${columnName}</span>
-                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options" aria-label="Column options for ${columnName}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </button>
                 <div class="dropdown-menu">
                     <a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a>
@@ -675,97 +690,68 @@
             `;
             thead.insertBefore(newTh, thead.lastElementChild);
 
-            // Add new input fields to each row with default value 0
             table.querySelectorAll('tbody tr').forEach(row => {
                 const newTd = document.createElement('td');
                 newTd.className = 'px-4 py-2';
-                newTd.innerHTML = `<input type="text" class="form-control form-control-sm grade-input" data-column="${columnName}" value="0" style="width: 100px;" pattern="^(?:[0-9]+(?:\.[0-9]{1,2})?)?$" title="Please enter a valid grade (e.g., 5, 10, 9.5, 8.75)">`;
+                newTd.innerHTML = `<input type="text" class="form-control form-control-sm grade-input" data-column="${columnName}" value="0" style="width: 100px;" pattern="^(?:[0-9]+(?:\.[0-9]{1,2})?)?$" title="Please enter a valid grade">`;
                 row.insertBefore(newTd, row.lastElementChild);
             });
 
             const modal = bootstrap.Modal.getInstance(document.getElementById('addGradeColumnModal'));
             modal.hide();
             document.getElementById('addGradeColumnForm').reset();
-
-            // Reinitialize tooltips for new buttons
-            const newTooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tooltip="tooltip"]'));
-            newTooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // Add validation to new grade inputs
-            document.querySelectorAll('.grade-input').forEach(input => {
-                input.addEventListener('input', function () {
-                    const value = this.value.trim();
-                    if (value === '') {
-                        this.value = '0'; // Set default value to 0 if empty
-                        return;
-                    }
-                    // Allow integers or decimals with up to two decimal places (e.g., 5, 10, 9.5, 8.75)
-                    if (!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
-                        this.setCustomValidity('Invalid grade. Use integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
-                    } else {
-                        this.setCustomValidity('');
-                    }
-                });
-            });
+            new bootstrap.Tooltip(newTh.querySelector('[data-bs-tooltip="tooltip"]'));
         });
 
         // Update Grades Button
-        document.getElementById('updateGradesButton').addEventListener('click', async function () {
-            const studentList = [];
-            let hasInvalidGrades = false;
-            document.querySelectorAll('#studentTable tbody tr').forEach(row => {
-                const studentId = row.dataset.studentId;
-                const groupNameInput = row.querySelector('.group-name-input');
-                const isGroupLeaderInput = row.querySelector('.is-group-leader-input');
-                const gradeInputs = row.querySelectorAll('.grade-input');
-                const grade = {};
-                gradeInputs.forEach(input => {
-                    const column = input.dataset.column;
-                    const value = input.value.trim();
-                    if (value && !/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
-                        hasInvalidGrades = true;
-                    }
-                    grade[column] = value || '0'; // Use 0 if empty
+        const updateGradesButton = document.getElementById('updateGradesButton');
+        if (updateGradesButton) {
+            updateGradesButton.addEventListener('click', async function () {
+                const studentList = [];
+                let hasInvalidGrades = false;
+                document.querySelectorAll('#studentTable tbody tr').forEach(row => {
+                    const studentId = row.dataset.studentId;
+                    const gradeInputs = row.querySelectorAll('.grade-input');
+                    const grade = {};
+                    gradeInputs.forEach(input => {
+                        if (!input.checkValidity()) {
+                            hasInvalidGrades = true;
+                        }
+                        grade[input.dataset.column] = input.value.trim() || '0';
+                    });
+                    studentList.push({
+                        id: studentId,
+                        class_name: '{{ class_name }}',
+                        grade: grade,
+                        group_name: row.querySelector('.group-name-input')?.value.trim() ?? '',
+                        is_group_leader: row.querySelector('.is-group-leader-input')?.checked ?? false
+                    });
                 });
-                studentList.push({
-                    id: studentId,
-                    class_name: '{{ class_name }}',
-                    grade: grade,
-                    group_name: groupNameInput ? groupNameInput.value.trim() : '',
-                    is_group_leader: isGroupLeaderInput ? isGroupLeaderInput.checked : false
-                });
-            });
 
-            if (hasInvalidGrades) {
-                alert('Please correct invalid grades. Grades must be integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
-                return;
-            }
-
-            const send_object = { student_list: studentList };
-            const className = encodeURIComponent('{{ class_name }}');
-            const year = encodeURIComponent('{{ year }}');
-            const url = `{{ url_for('update_student') }}?name=${className}&year=${year}`;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(send_object)
-                });
-                if (response.ok) {
-                    alert('Grades updated successfully.');
-                    window.location.reload();
-                } else {
-                    alert('Error updating grades. Please try again.');
+                if (hasInvalidGrades) {
+                    alert('Please correct invalid grades before updating.');
+                    return;
                 }
-            } catch (error) {
-                alert('Error updating grades: ' + error.message);
-            }
-        });
+                
+                const url = `{{ url_for('update_student', name=class_name, year=year) }}`;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ student_list: studentList })
+                    });
+                    if (response.ok) {
+                        alert('Grades updated successfully.');
+                        window.location.reload();
+                    } else {
+                        alert('Error updating grades. Please try again.');
+                    }
+                } catch (error) {
+                    alert('Error updating grades: ' + error.message);
+                }
+            });
+        }
     </script>
 </body>
 </html>
