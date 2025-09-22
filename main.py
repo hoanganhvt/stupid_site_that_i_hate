@@ -3,6 +3,13 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import json
 from datetime import date
 
+web_app_config={
+    "database_path":"/database/data.db",
+    "semester_list":["hk1","hk2","hkhe"],
+    "admin_id":"00000000",
+    "admin_password":"0"
+}
+
 database_path = "./database/data.db"
 
 app = Flask(__name__)
@@ -127,7 +134,6 @@ def view_class():
     
     class_name = request.args.get('name')
     class_started_year = request.args.get('year')
-    print(class_started_year)
     
     db = get_db()
     try:
@@ -186,7 +192,6 @@ def add_student():
     for student in student_array:
         user_exist=db.execute("select * from users where id=? and name=?",(student['id'],student['name'])).fetchone()
         if not user_exist:
-            print(student)
             db.execute("insert into users(id,password,name,email) values(?,?,?,?)",(student['id'],student['id'],student['name'],student['email']))
         db.execute("insert into student_to_classes(id,student_name,class_name,started_year) values(?,?,?,?)",(student['id'],student['name'],class_name,class_started_year))
     db.commit()
@@ -206,6 +211,11 @@ def update_student():
     student_list=request.json['student_list']
     db=get_db()
     for student in student_list:
+        print(student)
+        #format student grade into fucking numbers
+        for key in student['grade']:
+            student['grade'][key]=float(student['grade'][key])
+        
         student_exist=db.execute("select id from student_to_classes where id=? and class_name=?",(student['id'],student['class_name']))
         if student_exist:
             db.execute(
@@ -267,7 +277,7 @@ def class_settings():
         else:
             col_weight={}
         for key in grade_sample:
-            bonus_to=db.execute("select to_col from bonus_point_relation where from_col=?",(key,)).fetchall()
+            bonus_to=db.execute("select to_col from bonus_point_relation where from_col=? and class_name=? and started_year=?",(key,class_name,class_started_year)).fetchall()
             if bonus_to:
                 bonus_to=[score['to_col'] for score in bonus_to]
             else:
@@ -275,7 +285,6 @@ def class_settings():
             grades_column_relation[key]={'bonus_to':bonus_to}
             grades_column_relation[key]['is_group_leader_col']=True if key in group_leader_col else False 
             grades_column_relation[key]['col_weight']=float(col_weight[key]) if key in col_weight else 0
-        print(grades_column_relation)
         db.close()
         return render_template("classsettings.html",col_list=grades_column_relation)
     else:

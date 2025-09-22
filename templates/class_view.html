@@ -55,6 +55,10 @@
             border-color: #dc3545;
             background-color: #f8d7da;
         }
+        .absent-input:invalid {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
         .tooltip-inner {
             background-color: #1f2937;
             color: white;
@@ -212,6 +216,7 @@
                                         <th scope="col" class="px-4 py-3">email</th>
                                         <th scope="col" class="px-4 py-3">group_name</th>
                                         <th scope="col" class="px-4 py-3">is_group_leader</th>
+                                        <th scope="col" class="px-4 py-3">absent</th>
                                         {% set grade_columns = [] %}
                                         {% for student in student_list %}
                                             {% if student.grade %}
@@ -261,6 +266,9 @@
                                         </td>
                                         <td class="px-4 py-2">
                                             <input type="checkbox" class="form-check-input is-group-leader-input" data-student-id="{{ student.id }}" {% if student.is_group_leader is defined and student.is_group_leader %}checked{% endif %}>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <input type="number" class="form-control form-control-sm absent-input" data-student-id="{{ student.id }}" value="{{ student.absent if student.absent is defined else '0' }}" style="width: 80px;" min="0" step="1" title="Number of absent days">
                                         </td>
                                         {% set grade_data = student.grade | from_json if student.grade else {} %}
                                         {% for column in grade_columns %}
@@ -505,6 +513,18 @@
             });
         });
 
+        // Validate absent inputs
+        document.querySelectorAll('.absent-input').forEach(input => {
+            input.addEventListener('input', function () {
+                const value = parseInt(this.value);
+                if (isNaN(value) || value < 0) {
+                    this.setCustomValidity('Please enter a valid number of absent days (0 or positive integer).');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        });
+
         // Quick Edit Modal
         const quickEditModalElement = document.getElementById('quickEditModal');
         const quickEditModal = new bootstrap.Modal(quickEditModalElement);
@@ -709,9 +729,13 @@
             updateGradesButton.addEventListener('click', async function () {
                 const studentList = [];
                 let hasInvalidGrades = false;
+                let hasInvalidAbsent = false;
+
                 document.querySelectorAll('#studentTable tbody tr').forEach(row => {
                     const studentId = row.dataset.studentId;
                     const gradeInputs = row.querySelectorAll('.grade-input');
+                    const absentInput = row.querySelector('.absent-input');
+                    
                     const grade = {};
                     gradeInputs.forEach(input => {
                         if (!input.checkValidity()) {
@@ -719,17 +743,28 @@
                         }
                         grade[input.dataset.column] = input.value.trim() || '0';
                     });
+
+                    if (absentInput && !absentInput.checkValidity()) {
+                        hasInvalidAbsent = true;
+                    }
+
                     studentList.push({
                         id: studentId,
                         class_name: '{{ class_name }}',
                         grade: grade,
                         group_name: row.querySelector('.group-name-input')?.value.trim() ?? '',
-                        is_group_leader: row.querySelector('.is-group-leader-input')?.checked ?? false
+                        is_group_leader: row.querySelector('.is-group-leader-input')?.checked ?? false,
+                        absent: parseInt(absentInput?.value) || 0
                     });
                 });
 
                 if (hasInvalidGrades) {
                     alert('Please correct invalid grades before updating.');
+                    return;
+                }
+
+                if (hasInvalidAbsent) {
+                    alert('Please correct invalid absent values before updating.');
                     return;
                 }
                 
