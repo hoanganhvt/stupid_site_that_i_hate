@@ -13,6 +13,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .grade-column-header {
+            cursor: context-menu;
+            position: relative;
+        }
         .table-responsive {
             overflow-x: auto;
             cursor: grab;
@@ -87,6 +91,11 @@
         }
         @keyframes spin {
             to { transform: translateY(-50%) rotate(360deg); }
+        }
+        /* Custom style for the context menu */
+        .dropdown-menu.show {
+            position: fixed;
+            z-index: 1056; /* Ensure it's on top */
         }
     </style>
 </head>
@@ -229,13 +238,8 @@
                                             {% endif %}
                                         {% endfor %}
                                         {% for column in grade_columns %}
-                                            <th scope="col" class="px-4 py-3" data-column="{{ column }}">
+                                            <th scope="col" class="px-4 py-3 grade-column-header" data-column="{{ column }}">
                                                 <span>{{ column }}</span>
-                                                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options" aria-label="Column options for {{ column }}">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                    </svg>
-                                                </button>
                                                 <div class="dropdown-menu">
                                                     <a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a>
                                                     <a class="dropdown-item" href="#" data-action="quick-edit">Quick edit</a>
@@ -284,7 +288,7 @@
                         </div>
                         <div class="text-center mt-4">
                             <button id="updateGradesButton" class="btn text-white font-medium rounded-3 transition-all duration-200 hover:scale-105 active:scale-95 py-2 px-4" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);">
-                                Update Grades
+                                Save
                             </button>
                         </div>
                         {% else %}
@@ -339,7 +343,7 @@
                     <form id="addStudentForm" action="{{ url_for('add_student', name=class_name, year=year) }}" method="POST">
                         <div class="mb-3">
                             <label for="student_list" class="form-label text-gray-700 font-medium">Student Information</label>
-                            <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4" placeholder="Enter student info (e.g.,\nid1,Name 1,email1@example.com\nid2,Name 2,email2@example.com)" required></textarea>
+                            <textarea class="form-control rounded-3" id="student_list" name="student_list" rows="4" placeholder="Enter student info (e.g.,&#10;id1,Name 1,email1@example.com&#10;id2,Name 2,email2@example.com)" required></textarea>
                             <small class="text-gray-500">Enter each student's ID, name, and email on a new line, separated by commas.</small>
                             <div id="studentListError" class="text-danger mt-2" style="display: none;"></div>
                         </div>
@@ -411,16 +415,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tooltip="tooltip"]'));
             tooltipTriggerList.forEach(function (tooltipTriggerEl) {
                 new bootstrap.Tooltip(tooltipTriggerEl);
             });
-        });
 
-        // Card entrance animation
-        window.addEventListener('load', function () {
+            // Card entrance animation
             const cards = document.querySelectorAll('.card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
@@ -431,53 +433,37 @@
                     card.style.transform = 'translateY(0)';
                 }, 100 * (index + 1));
             });
-        });
 
-        // Auto-dismiss alerts
-        document.querySelectorAll('.alert').forEach(alert => {
-            setTimeout(() => {
-                if (alert && !alert.classList.contains('d-none')) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            }, 5000);
+            // Auto-dismiss alerts
+            document.querySelectorAll('.alert').forEach(alert => {
+                setTimeout(() => {
+                    if (alert && !alert.classList.contains('d-none')) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            });
         });
 
         // Table row hover effects
         document.querySelectorAll('tbody tr').forEach(row => {
-            row.addEventListener('mouseenter', function () {
-                this.style.transform = 'translateY(-2px)';
-                this.style.transition = 'transform 0.2s ease';
-            });
-            row.addEventListener('mouseleave', function () {
-                this.style.transform = 'translateY(0)';
-            });
+            row.addEventListener('mouseenter', function () { this.style.transform = 'translateY(-2px)'; this.style.transition = 'transform 0.2s ease'; });
+            row.addEventListener('mouseleave', function () { this.style.transform = 'translateY(0)'; });
         });
 
         // Button hover effects
         document.querySelectorAll('button').forEach(button => {
             if (!button.classList.contains('btn-outline-secondary')) {
-                button.addEventListener('mouseenter', function () {
-                    this.style.transform = 'translateY(-1px)';
-                });
-                button.addEventListener('mouseleave', function () {
-                    this.style.transform = 'translateY(0)';
-                });
+                button.addEventListener('mouseenter', function () { this.style.transform = 'translateY(-1px)'; });
+                button.addEventListener('mouseleave', function () { this.style.transform = 'translateY(0)'; });
             }
         });
 
         // Drag to scroll table horizontally
         const tableResponsive = document.querySelector('.table-responsive');
         if (tableResponsive) {
-            let isDragging = false;
-            let startX, scrollLeft;
-
-            tableResponsive.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startX = e.pageX - tableResponsive.offsetLeft;
-                scrollLeft = tableResponsive.scrollLeft;
-                tableResponsive.style.cursor = 'grabbing';
-            });
+            let isDragging = false, startX, scrollLeft;
+            tableResponsive.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX - tableResponsive.offsetLeft; scrollLeft = tableResponsive.scrollLeft; tableResponsive.style.cursor = 'grabbing'; });
             tableResponsive.addEventListener('mouseleave', () => { isDragging = false; tableResponsive.style.cursor = 'grab'; });
             tableResponsive.addEventListener('mouseup', () => { isDragging = false; tableResponsive.style.cursor = 'grab'; });
             tableResponsive.addEventListener('mousemove', (e) => {
@@ -490,67 +476,68 @@
         }
 
         // Scroll buttons functionality
-        document.getElementById('scrollTopBtn').addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-        document.getElementById('scrollBottomBtn').addEventListener('click', () => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        });
+        document.getElementById('scrollTopBtn').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        document.getElementById('scrollBottomBtn').addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
 
-        // Validate grade inputs
+        // Validate inputs
         document.querySelectorAll('.grade-input').forEach(input => {
-            input.addEventListener('input', function () {
-                const value = this.value.trim();
-                if (value === '') {
-                    this.value = '0';
-                    return;
-                }
-                if (!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(value)) {
-                    this.setCustomValidity('Invalid grade. Use integers (e.g., 5, 10) or decimals with up to two decimal places (e.g., 9.5, 8.75).');
-                } else {
-                    this.setCustomValidity('');
-                }
-            });
+            input.addEventListener('input', function () { this.setCustomValidity(!/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(this.value.trim()) ? 'Invalid grade.' : ''); });
         });
-
-        // Validate absent inputs
         document.querySelectorAll('.absent-input').forEach(input => {
-            input.addEventListener('input', function () {
-                const value = parseInt(this.value);
-                if (isNaN(value) || value < 0) {
-                    this.setCustomValidity('Please enter a valid number of absent days (0 or positive integer).');
-                } else {
-                    this.setCustomValidity('');
-                }
-            });
+            input.addEventListener('input', function () { const v = parseInt(this.value); this.setCustomValidity(isNaN(v) || v < 0 ? 'Invalid number.' : ''); });
         });
 
         // Quick Edit Modal
         const quickEditModalElement = document.getElementById('quickEditModal');
         const quickEditModal = new bootstrap.Modal(quickEditModalElement);
 
-        // Handle column options
+        // --- NEW: Hide context menus on global click ---
+        window.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        });
+
+        // Handle column options and context menu
         const studentTable = document.getElementById('studentTable');
         if (studentTable) {
+            // --- NEW: Context Menu Logic ---
+            studentTable.addEventListener('contextmenu', function(e) {
+                const th = e.target.closest('th.grade-column-header');
+                if (th) {
+                    e.preventDefault();
+                    // Hide any other open menus
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+
+                    const menu = th.querySelector('.dropdown-menu');
+                    if (menu) {
+                        menu.style.top = `${e.clientY}px`;
+                        menu.style.left = `${e.clientX}px`;
+                        menu.classList.add('show');
+                    }
+                }
+            });
+
+            // --- MODIFIED: Handle clicking on the menu items ---
             studentTable.addEventListener('click', function (e) {
                 const item = e.target.closest('.dropdown-item');
                 if (item) {
-                    e.preventDefault();
+                    e.preventDefault(); // Prevent default link behavior
                     const action = item.dataset.action;
-                    const th = item.closest('th');
+                    const th = item.closest('th.grade-column-header');
                     const column = th.dataset.column;
 
                     if (action === 'rename') {
                         const newName = prompt('Đổi tên cột:', column);
                         if (newName && newName !== column) {
-                            const existing = Array.from(document.querySelectorAll('th[data-column]')).map(t => t.dataset.column);
-                            if (existing.includes(newName)) {
+                            if (Array.from(document.querySelectorAll('th[data-column]')).some(t => t.dataset.column === newName)) {
                                 alert('Tên cột đã tồn tại.');
                                 return;
                             }
                             th.querySelector('span').textContent = newName;
                             th.dataset.column = newName;
-                            th.querySelector('button').setAttribute('aria-label', `Column options for ${newName}`);
                             document.querySelectorAll(`.grade-input[data-column="${column}"]`).forEach(inp => {
                                 inp.dataset.column = newName;
                             });
@@ -560,154 +547,90 @@
                             const position = Array.from(th.parentNode.children).indexOf(th);
                             th.remove();
                             document.querySelectorAll('tbody tr').forEach(tr => {
-                                if (tr.children[position]) tr.children[position].remove();
+                                tr.children[position]?.remove();
                             });
                         }
                     } else if (action === 'quick-edit') {
                         document.getElementById('quickEditColumn').value = column;
-                        const grades = [];
-                        document.querySelectorAll('tbody tr').forEach(tr => {
-                            const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
-                            grades.push(inp ? inp.value : '0');
-                        });
+                        const grades = Array.from(document.querySelectorAll(`tbody .grade-input[data-column="${column}"]`)).map(inp => inp.value || '0');
                         const quickEditTextarea = document.getElementById('quickEditTextarea');
                         quickEditTextarea.value = grades.join('\n');
                         quickEditTextarea.rows = Math.max(10, grades.length);
                         quickEditModal.show();
                     }
+                    // Hide the menu after action
+                    item.closest('.dropdown-menu').classList.remove('show');
                 }
             });
         }
-        
+
         // Quick Edit Form Submission
         document.getElementById('quickEditForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const column = document.getElementById('quickEditColumn').value;
             const lines = document.getElementById('quickEditTextarea').value.split('\n').map(l => l.trim());
-            let i = 0;
+            const inputs = document.querySelectorAll(`tbody .grade-input[data-column="${column}"]`);
             let hasInvalidGrades = false;
-            document.querySelectorAll('tbody tr').forEach(tr => {
-                const inp = tr.querySelector(`.grade-input[data-column="${column}"]`);
-                if (inp) {
-                    const grade = lines[i] || '0';
+
+            lines.forEach((grade, i) => {
+                if (inputs[i]) {
                     if (grade && !/^(?:[0-9]+(?:\.[0-9]{1,2})?)?$/.test(grade)) {
                         hasInvalidGrades = true;
                         alert(`Invalid grade "${grade}" at line ${i + 1}.`);
                         return;
                     }
-                    inp.value = grade;
-                    i++;
+                    inputs[i].value = grade || '0';
                 }
             });
-            if (!hasInvalidGrades) {
-                quickEditModal.hide();
-            }
+            if (!hasInvalidGrades) quickEditModal.hide();
         });
 
         // Add Student Form Submission
         document.getElementById('addStudentForm').addEventListener('submit', async function(event) {
             event.preventDefault();
-
-            const form = event.target;
-            const submitButton = form.querySelector('.add-student-btn');
+            const form = event.target, submitButton = form.querySelector('.add-student-btn');
             const studentListText = document.getElementById('student_list').value.trim();
             const errorDiv = document.getElementById('studentListError');
-            
-            errorDiv.style.display = 'none';
-            errorDiv.textContent = '';
+            errorDiv.style.display = 'none'; errorDiv.textContent = '';
 
-            if (!studentListText) {
-                errorDiv.textContent = 'Please enter student information.';
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (!studentListText) { errorDiv.textContent = 'Please enter student information.'; errorDiv.style.display = 'block'; return; }
 
-            const lines = studentListText.split('\n').filter(line => line.trim() !== '');
-            const student_array = [];
-            const invalid_lines = [];
-
+            const lines = studentListText.split('\n').filter(line => line.trim());
+            const student_array = [], invalid_lines = [];
             lines.forEach((line, index) => {
                 const parts = line.split(',').map(p => p.trim());
-                if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2]) {
-                    invalid_lines.push(index + 1);
-                } else {
-                    student_array.push({
-                        id: parts[0],
-                        name: parts[1],
-                        email: parts[2]
-                    });
-                }
+                if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2]) invalid_lines.push(index + 1);
+                else student_array.push({ id: parts[0], name: parts[1], email: parts[2] });
             });
 
-            if (invalid_lines.length > 0) {
-                errorDiv.textContent = `Invalid format on line(s): ${invalid_lines.join(', ')}. Please use: id,name,email`;
-                errorDiv.style.display = 'block';
-                return;
-            }
+            if (invalid_lines.length > 0) { errorDiv.textContent = `Invalid format on line(s): ${invalid_lines.join(', ')}. Please use: id,name,email`; errorDiv.style.display = 'block'; return; }
 
-            submitButton.classList.add('btn-loading');
-            submitButton.disabled = true;
-
+            submitButton.classList.add('btn-loading'); submitButton.disabled = true;
             try {
                 const response = await fetch(form.action, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ student_array: student_array })
                 });
-
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
-                    errorDiv.textContent = `Error: ${errorData.message || response.statusText}`;
-                    errorDiv.style.display = 'block';
-                }
-
-            } catch (error) {
-                console.error('Fetch error:', error);
-                errorDiv.textContent = 'A network error occurred. Please try again.';
-                errorDiv.style.display = 'block';
-            } finally {
-                submitButton.classList.remove('btn-loading');
-                submitButton.disabled = false;
-            }
+                if (response.ok) window.location.reload();
+                else { const err = await response.json().catch(() => ({ message: 'An unknown error.' })); errorDiv.textContent = `Error: ${err.message || response.statusText}`; errorDiv.style.display = 'block'; }
+            } catch (error) { console.error('Fetch error:', error); errorDiv.textContent = 'A network error occurred.'; errorDiv.style.display = 'block';
+            } finally { submitButton.classList.remove('btn-loading'); submitButton.disabled = false; }
         });
 
         // Add Grade Column Form Submission
         document.getElementById('addGradeColumnForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const columnName = document.getElementById('grade_column_name').value.trim();
-            if (!columnName) {
-                alert('Please enter a column name.');
-                return;
-            }
+            if (!columnName) { alert('Please enter a column name.'); return; }
 
-            const table = document.getElementById('studentTable');
-            const thead = table.querySelector('thead tr');
-            const existingColumns = Array.from(thead.querySelectorAll('th[data-column]')).map(th => th.dataset.column);
-
-            if (existingColumns.includes(columnName)) {
-                alert('Column name already exists.');
-                return;
-            }
+            const table = document.getElementById('studentTable'), thead = table.querySelector('thead tr');
+            if (Array.from(thead.querySelectorAll('th[data-column]')).some(th => th.dataset.column === columnName)) { alert('Column name already exists.'); return; }
 
             const newTh = document.createElement('th');
-            newTh.scope = 'col';
-            newTh.className = 'px-4 py-3';
+            newTh.scope = 'col'; newTh.className = 'px-4 py-3 grade-column-header';
             newTh.dataset.column = columnName;
-            newTh.innerHTML = `
-                <span>${columnName}</span>
-                <button class="btn btn-sm text-white p-0 ms-2" type="button" data-bs-toggle="dropdown" data-bs-tooltip="tooltip" data-bs-placement="top" title="Column Options">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </button>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a>
-                    <a class="dropdown-item" href="#" data-action="quick-edit">Quick edit</a>
-                    <a class="dropdown-item" href="#" data-action="delete">Xóa toàn bộ cột</a>
-                </div>
-            `;
+            newTh.innerHTML = `<span>${columnName}</span><div class="dropdown-menu"><a class="dropdown-item" href="#" data-action="rename">Đổi tên cột</a><a class="dropdown-item" href="#" data-action="quick-edit">Quick edit</a><a class="dropdown-item" href="#" data-action="delete">Xóa toàn bộ cột</a></div>`;
             thead.insertBefore(newTh, thead.lastElementChild);
 
             table.querySelectorAll('tbody tr').forEach(row => {
@@ -717,10 +640,8 @@
                 row.insertBefore(newTd, row.lastElementChild);
             });
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addGradeColumnModal'));
-            modal.hide();
-            document.getElementById('addGradeColumnForm').reset();
-            new bootstrap.Tooltip(newTh.querySelector('[data-bs-tooltip="tooltip"]'));
+            bootstrap.Modal.getInstance(document.getElementById('addGradeColumnModal')).hide();
+            this.reset();
         });
 
         // Update Grades Button
@@ -728,28 +649,16 @@
         if (updateGradesButton) {
             updateGradesButton.addEventListener('click', async function () {
                 const studentList = [];
-                let hasInvalidGrades = false;
-                let hasInvalidAbsent = false;
+                let hasInvalidGrades = false, hasInvalidAbsent = false;
 
                 document.querySelectorAll('#studentTable tbody tr').forEach(row => {
-                    const studentId = row.dataset.studentId;
-                    const gradeInputs = row.querySelectorAll('.grade-input');
-                    const absentInput = row.querySelector('.absent-input');
-                    
                     const grade = {};
-                    gradeInputs.forEach(input => {
-                        if (!input.checkValidity()) {
-                            hasInvalidGrades = true;
-                        }
-                        grade[input.dataset.column] = input.value.trim() || '0';
-                    });
-
-                    if (absentInput && !absentInput.checkValidity()) {
-                        hasInvalidAbsent = true;
-                    }
+                    row.querySelectorAll('.grade-input').forEach(input => { if (!input.checkValidity()) hasInvalidGrades = true; grade[input.dataset.column] = input.value.trim() || '0'; });
+                    const absentInput = row.querySelector('.absent-input');
+                    if (absentInput && !absentInput.checkValidity()) hasInvalidAbsent = true;
 
                     studentList.push({
-                        id: studentId,
+                        id: row.dataset.studentId,
                         class_name: '{{ class_name }}',
                         grade: grade,
                         group_name: row.querySelector('.group-name-input')?.value.trim() ?? '',
@@ -758,33 +667,14 @@
                     });
                 });
 
-                if (hasInvalidGrades) {
-                    alert('Please correct invalid grades before updating.');
-                    return;
-                }
+                if (hasInvalidGrades) { alert('Please correct invalid grades before updating.'); return; }
+                if (hasInvalidAbsent) { alert('Please correct invalid absent values before updating.'); return; }
 
-                if (hasInvalidAbsent) {
-                    alert('Please correct invalid absent values before updating.');
-                    return;
-                }
-                
                 const url = `{{ url_for('update_student', name=class_name, year=year) }}`;
-
                 try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ student_list: studentList })
-                    });
-                    if (response.ok) {
-                        alert('Grades updated successfully.');
-                        window.location.reload();
-                    } else {
-                        alert('Error updating grades. Please try again.');
-                    }
-                } catch (error) {
-                    alert('Error updating grades: ' + error.message);
-                }
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_list: studentList }) });
+                    if (response.ok) { alert('Grades updated successfully.'); window.location.reload(); } else alert('Error updating grades.');
+                } catch (error) { alert('Error updating grades: ' + error.message); }
             });
         }
     </script>
